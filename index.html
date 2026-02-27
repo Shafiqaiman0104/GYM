@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitJourney · monthly routine progression</title>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #f4f7fb; font-family: 'Inter', system-ui, sans-serif; }
+        .photo-card { transition: transform 0.1s ease; }
+        .photo-card:hover { transform: scale(1.02); }
+        .tab-active { background: white; border-color: #3b82f6; color: #1e40af; font-weight: 600; }
+        .month-tab { transition: all 0.2s; }
+        .month-tab.active { background: #3b82f6; color: white; }
+        .difficulty-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 9999px; }
+        .difficulty-easy { background: #e2f3e2; color: #2e7d32; }
+        .difficulty-medium { background: #fff3e0; color: #ef6c00; }
+        .difficulty-hard { background: #ffebee; color: #c62828; }
+        .routine-card { transition: all 0.2s; border-left: 4px solid transparent; }
+        .routine-card.month-1 { border-left-color: #3b82f6; }
+        .routine-card.month-2 { border-left-color: #8b5cf6; }
+        .routine-card.month-3 { border-left-color: #ec4899; }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+<div class="max-w-6xl mx-auto space-y-6">
+    <!-- header -->
+    <div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-dumbbell text-2xl text-blue-600"></i>
+            <h1 class="text-2xl font-bold text-gray-800">FitJourney <span class="text-sm font-normal text-gray-400 ml-2">monthly routine progression</span></h1>
+        </div>
+        <div class="text-sm text-gray-500"><i class="far fa-save mr-1"></i> auto-saved</div>
+    </div>
+
+    <!-- ========== PROFILE SECTION ========== -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100" id="profileSection">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-2"><i class="fas fa-user-circle text-blue-500"></i> My profile</h2>
+            <button id="editProfileBtn" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full text-gray-700 transition text-sm flex items-center gap-1">
+                <i class="fas fa-edit"></i> edit profile
+            </button>
+        </div>
+
+        <!-- Profile View Mode -->
+        <div id="profileView" class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div class="relative group">
+                <div id="profilePicPreview" class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-sm overflow-hidden">
+                    <img id="profileImage" src="" class="w-full h-full object-cover hidden">
+                    <span id="profileInitials" class="block">AR</span>
+                </div>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span id="profileName" class="text-xl font-medium text-gray-800">Alex Rivera</span>
+                    <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">active</span>
+                </div>
+                <div class="text-sm text-gray-500 flex flex-col sm:flex-row sm:items-center gap-3 mt-1">
+                    <span id="profileGoal"><i class="far fa-flag mr-1"></i> goal: build muscle & strength</span>
+                    <span><i class="far fa-calendar mr-1"></i> joined Jan 2026</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Edit Mode -->
+        <div id="profileEdit" class="hidden">
+            <div class="flex flex-col sm:flex-row gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="relative w-24 h-24 rounded-full bg-gray-200 overflow-hidden group cursor-pointer" id="profilePicUploadArea">
+                        <img id="editProfileImage" src="" class="w-full h-full object-cover hidden">
+                        <div id="editProfileInitials" class="w-full h-full flex items-center justify-center text-2xl font-bold text-gray-600">AR</div>
+                        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i class="fas fa-camera text-white text-xl"></i>
+                        </div>
+                        <input type="file" id="profilePicInput" accept="image/*" class="hidden">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">click to change</p>
+                </div>
+
+                <div class="flex-1 space-y-3">
+                    <div>
+                        <label class="text-xs text-gray-500 block">Display name</label>
+                        <input type="text" id="editName" value="Alex Rivera" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block">Fitness goal</label>
+                        <input type="text" id="editGoal" value="build muscle & strength" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button id="saveProfileBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-full">save changes</button>
+                        <button id="cancelProfileEditBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-4 py-2 rounded-full">cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MONTHLY ROUTINE SELECTOR ========== -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2"><i class="fas fa-calendar-alt text-blue-500"></i> Monthly routine progression</h2>
+        
+        <!-- Month selector tabs -->
+        <div class="flex gap-2 mb-6">
+            <button class="month-tab px-6 py-2 rounded-full text-sm font-medium bg-blue-600 text-white" data-month="1">Month 1</button>
+            <button class="month-tab px-6 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300" data-month="2">Month 2</button>
+            <button class="month-tab px-6 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300" data-month="3">Month 3</button>
+        </div>
+
+        <!-- Current month routines display -->
+        <div id="monthlyRoutinesContainer" class="space-y-3">
+            <!-- Routines for selected month will be shown here -->
+        </div>
+
+        <!-- Add routine to month button -->
+        <button id="addMonthlyRoutineBtn" class="mt-4 bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm px-4 py-2 rounded-full transition flex items-center gap-1">
+            <i class="fas fa-plus-circle"></i> add routine to current month
+        </button>
+    </div>
+
+    <!-- ========== WORKOUT ANALYTICS ========== -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2"><i class="fas fa-chart-line text-blue-500"></i> Monthly performance analytics</h2>
+        
+        <!-- Frequency selector -->
+        <div class="mb-6">
+            <label class="text-sm text-gray-600 block mb-2">How many days per week do you train?</label>
+            <div class="flex flex-wrap gap-2">
+                <button class="frequency-badge px-4 py-2 rounded-full border border-gray-300 text-sm hover:border-blue-500 transition" data-frequency="1">1 day/week</button>
+                <button class="frequency-badge px-4 py-2 rounded-full border border-gray-300 text-sm hover:border-blue-500 transition" data-frequency="2">2 days/week</button>
+                <button class="frequency-badge px-4 py-2 rounded-full border border-gray-300 text-sm hover:border-blue-500 transition" data-frequency="3">3 days/week</button>
+                <button class="frequency-badge px-4 py-2 rounded-full border border-gray-300 text-sm hover:border-blue-500 transition" data-frequency="4">4 days/week</button>
+                <button class="frequency-badge px-4 py-2 rounded-full border border-gray-300 text-sm hover:border-blue-500 transition" data-frequency="5">5 days/week</button>
+                <button class="frequency-badge px-4 py-2 rounded-full border border-gray-300 text-sm hover:border-blue-500 transition" data-frequency="6">6 days/week</button>
+            </div>
+        </div>
+
+        <!-- Monthly strength chart -->
+        <div class="mb-6">
+            <h3 class="text-md font-medium text-gray-700 mb-3">Monthly strength progression</h3>
+            <div class="bg-gray-50 p-4 rounded-xl">
+                <canvas id="strengthChart" style="width:100%; max-height:300px;"></canvas>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                <i class="fas fa-info-circle"></i> Based on your monthly routines + frequency + consistency
+            </p>
+        </div>
+
+        <!-- Monthly performance cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div class="bg-blue-50 p-3 rounded-lg">
+                <div class="text-xs text-blue-600 uppercase">Month 1</div>
+                <div class="text-xl font-bold text-gray-800" id="month1Strength">+8%</div>
+                <div class="text-xs text-gray-500">strength gain</div>
+                <div class="text-xs text-gray-400" id="month1Volume">240 total volume</div>
+            </div>
+            <div class="bg-purple-50 p-3 rounded-lg">
+                <div class="text-xs text-purple-600 uppercase">Month 2</div>
+                <div class="text-xl font-bold text-gray-800" id="month2Strength">+15%</div>
+                <div class="text-xs text-gray-500">strength gain</div>
+                <div class="text-xs text-gray-400" id="month2Volume">380 total volume</div>
+            </div>
+            <div class="bg-pink-50 p-3 rounded-lg">
+                <div class="text-xs text-pink-600 uppercase">Month 3</div>
+                <div class="text-xl font-bold text-gray-800" id="month3Strength">+24%</div>
+                <div class="text-xs text-gray-500">strength gain</div>
+                <div class="text-xs text-gray-400" id="month3Volume">520 total volume</div>
+            </div>
+        </div>
+
+        <!-- Progress message -->
+        <div class="text-sm bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+            <span id="monthlyMessage">Month 3: Your volume increased 117% since Month 1! 🔥</span>
+        </div>
+    </div>
+
+    <!-- ========== PROGRESS PHOTOS ========== -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-2"><i class="fas fa-camera-retro text-blue-500"></i> Progress photos</h2>
+        </div>
+
+        <!-- month tabs -->
+        <div class="flex border-b border-gray-200 mb-4">
+            <button id="tabMonth1" class="tab-btn px-5 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-blue-600" data-month="1">Month 1</button>
+            <button id="tabMonth2" class="tab-btn px-5 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-blue-600" data-month="2">Month 2</button>
+            <button id="tabMonth3" class="tab-btn px-5 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-blue-600" data-month="3">Month 3</button>
+        </div>
+
+        <!-- upload area -->
+        <div>
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <label class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-full cursor-pointer inline-flex items-center gap-2 transition shadow-sm">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload photo to current month
+                    <input type="file" id="photoInput" accept="image/*" class="hidden">
+                </label>
+                <span class="text-xs text-gray-400"><i class="fas fa-info-circle"></i> uploads go to the active tab</span>
+            </div>
+
+            <!-- photo grid -->
+            <div id="photoGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[120px] bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200"></div>
+        </div>
+    </div>
+
+    <!-- footer -->
+    <div class="text-xs text-center text-gray-400 pt-2">✓ Monthly routines • Real performance tracking • Progressive overload</div>
+</div>
+
+<script>
+    (function() {
+        // STORAGE KEYS
+        const STORAGE_PHOTOS = 'fitjourney_photos';
+        const STORAGE_MONTHLY_ROUTINES = 'fitjourney_monthly_routines';
+        const STORAGE_PROFILE = 'fitjourney_profile';
+        const STORAGE_FREQUENCY = 'fitjourney_frequency';
+        const STORAGE_WORKOUT_LOGS = 'fitjourney_workout_logs';
+
+        // DEFAULT PROFILE
+        const defaultProfile = {
+            name: 'Alex Rivera',
+            goal: 'build muscle & strength',
+            profilePic: null
+        };
+
+        // DEFAULT MONTHLY ROUTINES (progressive overload)
+        const defaultMonthlyRoutines = {
+            month1: [
+                {
+                    id: 'm1_r1',
+                    name: 'Beginner Full Body',
+                    exercises: [
+                        { name: 'Push ups', sets: 2, reps: 8 },
+                        { name: 'Bodyweight squats', sets: 2, reps: 10 },
+                        { name: 'Plank', sets: 2, reps: 20 } // reps = seconds
+                    ]
+                },
+                {
+                    id: 'm1_r2',
+                    name: 'Light Cardio',
+                    exercises: [
+                        { name: 'Walking', sets: 1, reps: 20 },
+                        { name: 'Stretching', sets: 2, reps: 15 }
+                    ]
+                }
+            ],
+            month2: [
+                {
+                    id: 'm2_r1',
+                    name: 'Intermediate Push/Pull',
+                    exercises: [
+                        { name: 'Push ups', sets: 3, reps: 12 },
+                        { name: 'Dumbbell rows', sets: 3, reps: 10 },
+                        { name: 'Lunges', sets: 3, reps: 12 },
+                        { name: 'Plank', sets: 3, reps: 30 }
+                    ]
+                },
+                {
+                    id: 'm2_r2',
+                    name: 'Core Focus',
+                    exercises: [
+                        { name: 'Crunches', sets: 3, reps: 15 },
+                        { name: 'Leg raises', sets: 3, reps: 12 }
+                    ]
+                }
+            ],
+            month3: [
+                {
+                    id: 'm3_r1',
+                    name: 'Advanced Strength',
+                    exercises: [
+                        { name: 'Weighted push ups', sets: 4, reps: 10 },
+                        { name: 'Barbell rows', sets: 4, reps: 8 },
+                        { name: 'Squats with weight', sets: 4, reps: 10 },
+                        { name: 'Pull ups', sets: 3, reps: 6 },
+                        { name: 'Dips', sets: 3, reps: 8 }
+                    ]
+                },
+                {
+                    id: 'm3_r2',
+                    name: 'HIIT Finisher',
+                    exercises: [
+                        { name: 'Burpees', sets: 3, reps: 15 },
+                        { name: 'Mountain climbers', sets: 3, reps: 20 }
+                    ]
+                }
+            ]
+        };
+
+        // Initialize data
+        let photos = JSON.parse(localStorage.getItem(STORAGE_PHOTOS)) || { month1: [], month2: [], month3: [] };
+        let monthlyRoutines = JSON.parse(localStorage.getItem(STORAGE_MONTHLY_ROUTINES)) || defaultMonthlyRoutines;
+        let profile = JSON.parse(localStorage.getItem(STORAGE_PROFILE)) || defaultProfile;
+        let workoutFrequency = parseInt(localStorage.getItem(STORAGE_FREQUENCY)) || 3;
+        
+        // Workout logs (simulated completion)
+        let workoutLogs = JSON.parse(localStorage.getItem(STORAGE_WORKOUT_LOGS)) || {
+            month1: { completed: 8, total: 12 },
+            month2: { completed: 10, total: 12 },
+            month3: { completed: 6, total: 12 }
+        };
+
+        let currentPhotoMonth = 1;
+        let currentRoutineMonth = 1; // For monthly routines view
+        let strengthChart = null;
+
+        // Save functions
+        function savePhotos() { localStorage.setItem(STORAGE_PHOTOS, JSON.stringify(photos)); }
+        function saveMonthlyRoutines() { localStorage.setItem(STORAGE_MONTHLY_ROUTINES, JSON.stringify(monthlyRoutines)); }
+        function saveProfile() { localStorage.setItem(STORAGE_PROFILE, JSON.stringify(profile)); }
+        function saveFrequency() { localStorage.setItem(STORAGE_FREQUENCY, workoutFrequency.toString()); }
+        function saveWorkoutLogs() { localStorage.setItem(STORAGE_WORKOUT_LOGS, JSON.stringify(workoutLogs)); }
+
+        // ========== ROUTINE CALCULATIONS ==========
+        function calculateRoutineVolume(routine) {
+            let totalVolume = 0;
+            routine.exercises.forEach(ex => {
+                totalVolume += (ex.sets * ex.reps);
+            });
+            return totalVolume;
+        }
+
+        function calculateRoutineDifficulty(volume) {
+            if (volume >= 50) return { level: 'hard', score: 1.5, class: 'difficulty-hard' };
+            if (volume >= 25) return { level: 'medium', score: 1.2, class: 'difficulty-medium' };
+            return { level: 'easy', score: 1.0, class: 'difficulty-easy' };
+        }
+
+        function calculateMonthlyStats(month) {
+            const routines = monthlyRoutines[month] || [];
+            let totalVolume = 0;
+            let totalDifficultyScore = 0;
+            
+            routines.forEach(routine => {
+                const volume = calculateRoutineVolume(routine);
+                totalVolume += volume;
+                const difficulty = calculateRoutineDifficulty(volume);
+                totalDifficultyScore += difficulty.score;
+            });
+
+            const avgDifficulty = routines.length > 0 ? totalDifficultyScore / routines.length : 1.0;
+            const consistency = workoutLogs[month] ? workoutLogs[month].completed / workoutLogs[month].total : 0.5;
+            
+            return { totalVolume, avgDifficulty, consistency };
+        }
+
+        function calculateMonthlyStrength() {
+            const month1Stats = calculateMonthlyStats('month1');
+            const month2Stats = calculateMonthlyStats('month2');
+            const month3Stats = calculateMonthlyStats('month3');
+
+            // Base gain starts low, increases with volume and difficulty
+            const month1Gain = Math.round(5 + (month1Stats.totalVolume / 100) * month1Stats.avgDifficulty * month1Stats.consistency);
+            const month2Gain = Math.round(8 + (month2Stats.totalVolume / 90) * month2Stats.avgDifficulty * month2Stats.consistency);
+            const month3Gain = Math.round(12 + (month3Stats.totalVolume / 80) * month3Stats.avgDifficulty * month3Stats.consistency);
+
+            // Update UI
+            document.getElementById('month1Strength').textContent = `+${month1Gain}%`;
+            document.getElementById('month2Strength').textContent = `+${month2Gain}%`;
+            document.getElementById('month3Strength').textContent = `+${month3Gain}%`;
+            
+            document.getElementById('month1Volume').textContent = `${month1Stats.totalVolume} total volume`;
+            document.getElementById('month2Volume').textContent = `${month2Stats.totalVolume} total volume`;
+            document.getElementById('month3Volume').textContent = `${month3Stats.totalVolume} total volume`;
+
+            // Calculate progression message
+            const volumeIncrease = ((month3Stats.totalVolume - month1Stats.totalVolume) / month1Stats.totalVolume * 100).toFixed(0);
+            const strengthIncrease = ((month3Gain - month1Gain) / month1Gain * 100).toFixed(0);
+            
+            let message = '';
+            if (volumeIncrease > 100) {
+                message = `🔥 Month 3: Your volume increased ${volumeIncrease}% since Month 1! Incredible progression!`;
+            } else if (volumeIncrease > 50) {
+                message = `💪 Month 3: Great progress! Volume up ${volumeIncrease}%, strength gains +${month3Gain}%`;
+            } else {
+                message = `🌱 Month 3: Steady progress. Try adding more volume for bigger gains!`;
+            }
+            
+            document.getElementById('monthlyMessage').textContent = message;
+
+            return { month1: month1Gain, month2: month2Gain, month3: month3Gain };
+        }
+
+        function renderChart() {
+            const gains = calculateMonthlyStrength();
+            
+            const ctx = document.getElementById('strengthChart').getContext('2d');
+            
+            if (strengthChart) {
+                strengthChart.destroy();
+            }
+
+            strengthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Month 1', 'Month 2', 'Month 3'],
+                    datasets: [{
+                        label: 'Strength gain (%)',
+                        data: [gains.month1, gains.month2, gains.month3],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899'],
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `+${context.raw}% strength · Month ${context.dataIndex + 1}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            title: { display: true, text: 'Strength gain %' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========== MONTHLY ROUTINES RENDERING ==========
+        function renderMonthlyRoutines() {
+            const container = document.getElementById('monthlyRoutinesContainer');
+            const monthKey = 'month' + currentRoutineMonth;
+            const routines = monthlyRoutines[monthKey] || [];
+
+            if (routines.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-400 italic p-4 bg-gray-50 rounded-lg">No routines for this month yet. Click "add routine" to create one!</p>';
+                return;
+            }
+
+            container.innerHTML = routines.map(routine => {
+                const volume = calculateRoutineVolume(routine);
+                const difficulty = calculateRoutineDifficulty(volume);
+                
+                const exercisesHtml = routine.exercises.map(ex => `
+                    <div class="flex items-center justify-between text-sm bg-white p-2 rounded-lg border border-gray-100">
+                        <span class="font-medium">${ex.name}</span>
+                        <span class="text-gray-600">${ex.sets} × ${ex.reps}</span>
+                    </div>
+                `).join('');
+                
+                return `
+                    <div class="routine-card month-${currentRoutineMonth} bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-semibold text-gray-800">${routine.name}</h3>
+                                <span class="difficulty-badge ${difficulty.class}">${difficulty.level} · ${volume} vol</span>
+                            </div>
+                            <button class="text-red-400 hover:text-red-600 delete-monthly-routine text-sm" data-month="${currentRoutineMonth}" data-id="${routine.id}">
+                                <i class="far fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-1.5">${exercisesHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Delete handlers
+            document.querySelectorAll('.delete-monthly-routine').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const month = btn.dataset.month;
+                    const id = btn.dataset.id;
+                    const monthKey = 'month' + month;
+                    
+                    monthlyRoutines[monthKey] = monthlyRoutines[monthKey].filter(r => r.id !== id);
+                    saveMonthlyRoutines();
+                    renderMonthlyRoutines();
+                    renderChart(); // Update chart
+                });
+            });
+        }
+
+        // ========== ADD ROUTINE TO MONTH FORM ==========
+        function showAddRoutineForm() {
+            const container = document.getElementById('monthlyRoutinesContainer');
+            
+            const formDiv = document.createElement('div');
+            formDiv.className = 'bg-blue-50 p-4 rounded-xl border-2 border-blue-200 mt-2 mb-4';
+            formDiv.innerHTML = `
+                <div class="mb-3">
+                    <input type="text" id="newMonthlyRoutineName" placeholder="Routine name (e.g. Push day)" 
+                           class="w-full border border-gray-300 p-2 rounded-lg text-sm">
+                </div>
+                <div id="newMonthlyExercisesList" class="space-y-2 mb-3"></div>
+                <div class="flex gap-2 flex-wrap">
+                    <button id="addMonthlyExerciseRowBtn" class="bg-gray-200 hover:bg-gray-300 text-sm px-3 py-1.5 rounded-full flex items-center gap-1">
+                        <i class="fas fa-plus"></i> add exercise
+                    </button>
+                    <button id="saveMonthlyRoutineBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded-full">
+                        save routine to month ${currentRoutineMonth}
+                    </button>
+                    <button id="cancelMonthlyRoutineBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-sm px-4 py-1.5 rounded-full">
+                        cancel
+                    </button>
+                </div>
+            `;
+
+            container.insertBefore(formDiv, container.firstChild);
+
+            function addExerciseRow(name = '', sets = '', reps = '') {
+                const list = document.getElementById('newMonthlyExercisesList');
+                const row = document.createElement('div');
+                row.className = 'flex gap-2 items-center bg-white p-2 rounded-lg';
+                row.innerHTML = `
+                    <input type="text" placeholder="Exercise" class="ex-name flex-1 text-sm border rounded p-1.5" value="${name}">
+                    <input type="number" placeholder="Sets" class="ex-sets w-16 text-sm border rounded p-1.5" value="${sets}">
+                    <input type="number" placeholder="Reps" class="ex-reps w-16 text-sm border rounded p-1.5" value="${reps}">
+                    <button class="remove-ex-row text-red-400 hover:text-red-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                row.querySelector('.remove-ex-row').addEventListener('click', () => row.remove());
+                list.appendChild(row);
+            }
+
+            addExerciseRow();
+
+            document.getElementById('addMonthlyExerciseRowBtn').addEventListener('click', () => addExerciseRow());
+            document.getElementById('cancelMonthlyRoutineBtn').addEventListener('click', () => formDiv.remove());
+
+            document.getElementById('saveMonthlyRoutineBtn').addEventListener('click', () => {
+                const nameInput = document.getElementById('newMonthlyRoutineName');
+                const routineName = nameInput.value.trim();
+                
+                if (!routineName) {
+                    alert('Please name your routine');
+                    return;
+                }
+
+                const exerciseRows = document.querySelectorAll('#newMonthlyExercisesList > div');
+                const exercises = [];
+                
+                for (let row of exerciseRows) {
+                    const exName = row.querySelector('.ex-name')?.value.trim();
+                    const sets = row.querySelector('.ex-sets')?.value.trim();
+                    const reps = row.querySelector('.ex-reps')?.value.trim();
+                    
+                    if (exName && sets && reps) {
+                        if (isNaN(sets) || isNaN(reps)) {
+                            alert('Sets and reps must be numbers');
+                            return;
+                        }
+                        exercises.push({ 
+                            name: exName, 
+                            sets: parseInt(sets), 
+                            reps: parseInt(reps) 
+                        });
+                    } else if (exName || sets || reps) {
+                        alert('Please fill all fields in each exercise row');
+                        return;
+                    }
+                }
+
+                if (exercises.length === 0) {
+                    alert('Add at least one exercise');
+                    return;
+                }
+
+                const newId = 'routine_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                const monthKey = 'month' + currentRoutineMonth;
+                
+                if (!monthlyRoutines[monthKey]) {
+                    monthlyRoutines[monthKey] = [];
+                }
+                
+                monthlyRoutines[monthKey].push({ 
+                    id: newId, 
+                    name: routineName, 
+                    exercises: exercises 
+                });
+                
+                saveMonthlyRoutines();
+                formDiv.remove();
+                renderMonthlyRoutines();
+                renderChart(); // Update chart with new data
+            });
+        }
+
+        // ========== PROFILE RENDERING ==========
+        function renderProfile() {
+            document.getElementById('profileName').textContent = profile.name;
+            document.getElementById('profileGoal').innerHTML = `<i class="far fa-flag mr-1"></i> goal: ${profile.goal}`;
+            
+            const profileImage = document.getElementById('profileImage');
+            const profileInitials = document.getElementById('profileInitials');
+            const editProfileImage = document.getElementById('editProfileImage');
+            const editProfileInitials = document.getElementById('editProfileInitials');
+            
+            const initials = profile.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            
+            if (profile.profilePic) {
+                profileImage.src = profile.profilePic;
+                profileImage.classList.remove('hidden');
+                profileInitials.classList.add('hidden');
+                
+                editProfileImage.src = profile.profilePic;
+                editProfileImage.classList.remove('hidden');
+                editProfileInitials.classList.add('hidden');
+            } else {
+                profileImage.classList.add('hidden');
+                profileInitials.classList.remove('hidden');
+                profileInitials.textContent = initials;
+                
+                editProfileImage.classList.add('hidden');
+                editProfileInitials.classList.remove('hidden');
+                editProfileInitials.textContent = initials;
+            }
+            
+            document.getElementById('editName').value = profile.name;
+            document.getElementById('editGoal').value = profile.goal;
+        }
+
+        // ========== PHOTOS RENDERING ==========
+        function renderPhotos() {
+            const grid = document.getElementById('photoGrid');
+            let monthKey = 'month' + currentPhotoMonth;
+            let monthPhotos = photos[monthKey] || [];
+
+            if (monthPhotos.length === 0) {
+                grid.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-6 text-gray-300"><i class="fas fa-image text-3xl mb-2"></i><span class="text-sm">No photos for month ${currentPhotoMonth} yet</span></div>`;
+                return;
+            }
+
+            grid.innerHTML = '';
+            monthPhotos.forEach((photo, index) => {
+                const card = document.createElement('div');
+                card.className = 'relative photo-card group';
+                card.innerHTML = `
+                    <img src="${photo.dataURL}" class="w-full h-28 object-cover rounded-xl border border-gray-200 shadow-sm">
+                    <button class="absolute top-1 right-1 bg-white hover:bg-red-50 rounded-full w-6 h-6 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition" data-delete-month="${currentPhotoMonth}" data-delete-index="${index}">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                    <span class="absolute bottom-1 left-1 bg-black bg-opacity-40 text-white text-[10px] px-1 rounded">M${currentPhotoMonth}</span>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.querySelectorAll('[data-delete-month]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const month = btn.dataset.deleteMonth;
+                    const idx = btn.dataset.deleteIndex;
+                    let monthKey = 'month' + month;
+                    if (photos[monthKey] && photos[monthKey][idx]) {
+                        photos[monthKey].splice(idx, 1);
+                        savePhotos();
+                        renderPhotos();
+                    }
+                });
+            });
+        }
+
+        // ========== EVENT LISTENERS ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial render
+            renderProfile();
+            renderPhotos();
+            renderMonthlyRoutines();
+            
+            // Initialize chart
+            renderChart();
+            
+            // Initialize frequency UI
+            document.querySelectorAll('.frequency-badge').forEach(btn => {
+                const btnFreq = parseInt(btn.dataset.frequency);
+                if (btnFreq === workoutFrequency) {
+                    btn.classList.add('selected', 'bg-blue-600', 'text-white', 'border-blue-600');
+                }
+            });
+            
+            // Month tabs for routines
+            const monthTabs = document.querySelectorAll('.month-tab');
+            monthTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const month = parseInt(tab.dataset.month);
+                    currentRoutineMonth = month;
+                    
+                    // Update tab styles
+                    monthTabs.forEach(t => {
+                        t.classList.remove('bg-blue-600', 'text-white');
+                        t.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    tab.classList.remove('bg-gray-200', 'text-gray-700');
+                    tab.classList.add('bg-blue-600', 'text-white');
+                    
+                    // Render routines for selected month
+                    renderMonthlyRoutines();
+                });
+            });
+            
+            // Add routine to month button
+            document.getElementById('addMonthlyRoutineBtn').addEventListener('click', showAddRoutineForm);
+            
+            // Frequency buttons
+            document.querySelectorAll('.frequency-badge').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const freq = parseInt(btn.dataset.frequency);
+                    workoutFrequency = freq;
+                    saveFrequency();
+                    
+                    document.querySelectorAll('.frequency-badge').forEach(b => {
+                        b.classList.remove('selected', 'bg-blue-600', 'text-white', 'border-blue-600');
+                    });
+                    btn.classList.add('selected', 'bg-blue-600', 'text-white', 'border-blue-600');
+                    
+                    renderChart(); // Update chart with new frequency
+                });
+            });
+
+            // Photo month tabs
+            const tabMonth1 = document.getElementById('tabMonth1');
+            const tabMonth2 = document.getElementById('tabMonth2');
+            const tabMonth3 = document.getElementById('tabMonth3');
+
+            function setActivePhotoTab(month) {
+                [tabMonth1, tabMonth2, tabMonth3].forEach((btn, idx) => {
+                    if (idx+1 === month) {
+                        btn.classList.add('tab-active', 'border-blue-500', 'text-blue-700');
+                    } else {
+                        btn.classList.remove('tab-active', 'border-blue-500', 'text-blue-700');
+                    }
+                });
+            }
+
+            tabMonth1.addEventListener('click', () => { 
+                currentPhotoMonth = 1; 
+                setActivePhotoTab(1); 
+                renderPhotos(); 
+            });
+            
+            tabMonth2.addEventListener('click', () => { 
+                currentPhotoMonth = 2; 
+                setActivePhotoTab(2); 
+                renderPhotos(); 
+            });
+            
+            tabMonth3.addEventListener('click', () => { 
+                currentPhotoMonth = 3; 
+                setActivePhotoTab(3); 
+                renderPhotos(); 
+            });
+            
+            setActivePhotoTab(1);
+
+            // Photo upload
+            document.getElementById('photoInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = (event) => {
+                    let monthKey = 'month' + currentPhotoMonth;
+                    if (!photos[monthKey]) photos[monthKey] = [];
+                    photos[monthKey].push({ dataURL: event.target.result, timestamp: Date.now() });
+                    savePhotos();
+                    renderPhotos();
+                };
+                
+                reader.readAsDataURL(file);
+                e.target.value = '';
+            });
+
+            // Profile edit
+            const profileView = document.getElementById('profileView');
+            const profileEdit = document.getElementById('profileEdit');
+            const editBtn = document.getElementById('editProfileBtn');
+            const saveBtn = document.getElementById('saveProfileBtn');
+            const cancelBtn = document.getElementById('cancelProfileEditBtn');
+            const profilePicInput = document.getElementById('profilePicInput');
+            const profilePicUploadArea = document.getElementById('profilePicUploadArea');
+
+            editBtn.addEventListener('click', () => {
+                profileView.classList.add('hidden');
+                profileEdit.classList.remove('hidden');
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                profileView.classList.remove('hidden');
+                profileEdit.classList.add('hidden');
+                document.getElementById('editName').value = profile.name;
+                document.getElementById('editGoal').value = profile.goal;
+                if (profile.profilePic) {
+                    document.getElementById('editProfileImage').src = profile.profilePic;
+                    document.getElementById('editProfileImage').classList.remove('hidden');
+                    document.getElementById('editProfileInitials').classList.add('hidden');
+                } else {
+                    document.getElementById('editProfileImage').classList.add('hidden');
+                    document.getElementById('editProfileInitials').classList.remove('hidden');
+                }
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const newName = document.getElementById('editName').value.trim();
+                const newGoal = document.getElementById('editGoal').value.trim();
+                
+                if (!newName) {
+                    alert('Name cannot be empty');
+                    return;
+                }
+                
+                profile.name = newName;
+                profile.goal = newGoal || 'not set';
+                
+                saveProfile();
+                renderProfile();
+                
+                profileView.classList.remove('hidden');
+                profileEdit.classList.add('hidden');
+            });
+
+            profilePicUploadArea.addEventListener('click', () => {
+                profilePicInput.click();
+            });
+
+            profilePicInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = (event) => {
+                    profile.profilePic = event.target.result;
+                    saveProfile();
+                    renderProfile();
+                    
+                    document.getElementById('editProfileImage').src = event.target.result;
+                    document.getElementById('editProfileImage').classList.remove('hidden');
+                    document.getElementById('editProfileInitials').classList.add('hidden');
+                };
+                
+                reader.readAsDataURL(file);
+                e.target.value = '';
+            });
+        });
+    })();
+</script>
+</body>
+</html>
